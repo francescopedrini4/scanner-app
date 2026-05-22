@@ -39,9 +39,7 @@ body{
 
 <h1>SCANNER</h1>
 
-<div id="status">
-SCANSIONA PRODOTTO
-</div>
+<div id="status">SCANSIONA PRODOTTO</div>
 
 <div id="reader"></div>
 
@@ -78,7 +76,7 @@ function onScanSuccess(decodedText){
     if(parts.length < 2){
 
       document.getElementById("status").innerHTML =
-      "<span class='err'>QR PRODOTTO NON VALIDO</span>";
+        "<span class='err'>QR PRODOTTO NON VALIDO</span>";
 
       busy = false;
       return;
@@ -94,10 +92,7 @@ function onScanSuccess(decodedText){
       currentProduct = true;
 
       document.getElementById("status").innerHTML =
-        `<span class='ok'>
-        PRODOTTO OK<br>
-        SCANSIONA LOTTO
-        </span>`;
+        `<span class='ok'>PRODOTTO OK<br>SCANSIONA LOTTO</span>`;
 
       busy = false;
     });
@@ -106,13 +101,23 @@ function onScanSuccess(decodedText){
   }
 
   // =========================
-  // QR LOTTO
+  // QR LOTTO (FIX DEFINITIVO)
   // =========================
+
+  let lotto = decodedText;
+
+  try {
+    const url = new URL(decodedText);
+    lotto = url.searchParams.get("lotto") || decodedText;
+  } catch (e) {
+    lotto = decodedText;
+  }
+
   send(
-    `${API}?lotto=${encodeURIComponent(decodedText)}&device=TEL1`
+    `${API}?lotto=${encodeURIComponent(lotto)}&device=TEL1`
   ).then(res=>{
 
-    if(res.includes("OK")){
+    if(res.includes("REGISTRAZIONE COMPLETATA")){
       document.getElementById("status").innerHTML =
         `<span class='ok'>${res}</span>`;
     } else {
