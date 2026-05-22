@@ -1,7 +1,7 @@
 async function startScan() {
 
   document.getElementById("reader").style.display = "block";
-  document.getElementById("status").innerText = "AVVIO CAMERA...";
+  document.getElementById("status").innerText = "RICHIESTA CAMERA...";
 
   try {
 
@@ -12,8 +12,14 @@ async function startScan() {
 
     scanner = new Html5Qrcode("reader");
 
+    const devices = await Html5Qrcode.getCameras();
+
+    if (!devices || devices.length === 0) {
+      throw "NESSUNA CAMERA TROVATA";
+    }
+
     await scanner.start(
-      { facingMode: "environment" },
+      { deviceId: devices[0].id },
       {
         fps: 10,
         qrbox: { width: 250, height: 250 }
@@ -28,7 +34,7 @@ async function startScan() {
     console.error(err);
 
     document.getElementById("status").innerHTML =
-      "CAMERA BLOCCATA: " + err;
+      "<span class='err'>CAMERA NON ATTIVA: " + err + "</span>";
 
   }
 }
