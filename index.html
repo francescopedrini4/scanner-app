@@ -1,3 +1,5 @@
+<script>
+
 async function startScan() {
 
   document.getElementById("reader").style.display = "block";
@@ -20,10 +22,7 @@ async function startScan() {
 
     await scanner.start(
       { deviceId: devices[0].id },
-      {
-        fps: 10,
-        qrbox: { width: 250, height: 250 }
-      },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
       onScan
     );
 
@@ -31,10 +30,10 @@ async function startScan() {
 
   } catch (err) {
 
-    console.error(err);
-
     document.getElementById("status").innerHTML =
-      "<span class='err'>CAMERA NON ATTIVA: " + err + "</span>";
+      "CAMERA NON ATTIVA: " + err;
 
   }
 }
+
+</script>
