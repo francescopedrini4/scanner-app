@@ -4,10 +4,6 @@ async function startScan() {
 
   try {
 
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      throw "BROWSER NON SUPPORTATO";
-    }
-
     scanner = new Html5Qrcode("reader");
 
     const devices = await Html5Qrcode.getCameras();
@@ -16,8 +12,8 @@ async function startScan() {
       throw "NESSUNA CAMERA TROVATA";
     }
 
-    // 🔥 prova a trovare camera posteriore
-    let backCamera = devices.find(d =>
+    // 🔥 cerca camera posteriore
+    const backCamera = devices.find(d =>
       d.label.toLowerCase().includes("back") ||
       d.label.toLowerCase().includes("rear") ||
       d.label.toLowerCase().includes("environment")
