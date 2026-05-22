@@ -4,6 +4,13 @@ async function startScan() {
 
   try {
 
+    if (scanner) {
+      try {
+        await scanner.stop();
+        await scanner.clear();
+      } catch (e) {}
+    }
+
     scanner = new Html5Qrcode("reader");
 
     const devices = await Html5Qrcode.getCameras();
@@ -33,7 +40,7 @@ async function startScan() {
 
     console.error(err);
 
-    document.getElementById("status").innerHTML =
+    document.getElementById("status").innerText =
       "CAMERA NON ATTIVA: " + err;
 
   }
