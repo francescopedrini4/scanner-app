@@ -44,9 +44,10 @@ button{
 
 <script>
 
+// 🔥 METTI QUI IL TUO DEPLOY
 const API = "https://script.google.com/macros/s/AKfycbztPEDH-ZUjD46uW11p-cQjV37J4YIOi3nihPIVbQEV_YS2f1bY-NzzLNOIyN3TjGMFBg/exec";
 
-let scanner;
+let scanner = null;
 let state = "PRODOTTO";
 let lock = false;
 let lastScanTime = 0;
@@ -60,9 +61,13 @@ async function send(url){
   return await r.text();
 }
 
-function startScan(){
+function startScan() {
 
   document.getElementById("reader").style.display = "block";
+
+  if (scanner) {
+    scanner.clear();
+  }
 
   scanner = new Html5Qrcode("reader");
 
@@ -77,15 +82,11 @@ function startScan(){
 }
 
 function restartScanner(){
-  scanner.stop().then(() => {
-    setTimeout(() => {
-      scanner.start(
-        { facingMode: { ideal: "environment" } },
-        { fps: 10, qrbox: 250 },
-        onScan
-      );
-    }, 800);
-  });
+  if(scanner){
+    scanner.clear().then(() => {
+      setTimeout(() => startScan(), 800);
+    });
+  }
 }
 
 function onScan(decodedText){
@@ -159,7 +160,7 @@ function onScan(decodedText){
 
       lock = false;
 
-      // 🔥 FIX IPHONE: restart scanner invece di pause/resume
+      // 🔥 FIX IPHONE: restart pulito camera
       restartScanner();
 
     }
