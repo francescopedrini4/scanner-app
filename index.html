@@ -1,8 +1,10 @@
 async function startScan() {
 
   document.getElementById("reader").style.display = "block";
+  document.getElementById("status").innerText = "AVVIO CAMERA...";
 
   try {
+
     if (scanner) {
       await scanner.clear();
       scanner = null;
@@ -10,22 +12,23 @@ async function startScan() {
 
     scanner = new Html5Qrcode("reader");
 
-    document.getElementById("status").innerText = "AVVIO CAMERA...";
-
     await scanner.start(
       { facingMode: { ideal: "environment" } },
-      { fps: 10, qrbox: 250 },
-      (text) => {
-        console.log("QR LETTO:", text);
-      }
+      {
+        fps: 10,
+        qrbox: { width: 250, height: 250 }
+      },
+      onScan
     );
 
-    document.getElementById("status").innerText = "CAMERA ATTIVA";
+    document.getElementById("status").innerText = "SCANSIONA";
 
   } catch (err) {
-    document.getElementById("status").innerHTML =
-      "<span class='err'>ERRORE CAMERA: " + err + "</span>";
 
-    console.log(err);
+    console.error(err);
+
+    document.getElementById("status").innerHTML =
+      "<span class='err'>CAMERA BLOCCATA: " + err + "</span>";
+
   }
 }
