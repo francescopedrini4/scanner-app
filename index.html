@@ -47,28 +47,30 @@ SCANSIONA PRODOTTO
 
 <script>
 
-const API = "INCOLLA_QUI_IL_TUO_LINK";
+const API = "https://script.google.com/macros/s/AKfycbz6RvbE4bypP0txnU7sZQD3BdtwKRBshVtJBrgniuR809otjE4iaJiRrF4lVVKbYNg8CQ/exec";
 
-let currentProduct = null;
+let currentProduct = false;
+let busy = false;
 
 function beep(){
   navigator.vibrate(200);
 }
 
 async function send(url){
-
   const r = await fetch(url);
   return await r.text();
 }
 
 function onScanSuccess(decodedText){
 
+  if(busy) return;
+  busy = true;
+
   beep();
 
+  // =========================
   // QR PRODOTTO
-  // formato:
-  // articolo|trattamento
-
+  // =========================
   if(!currentProduct){
 
     const parts = decodedText.split("|");
@@ -76,8 +78,9 @@ function onScanSuccess(decodedText){
     if(parts.length < 2){
 
       document.getElementById("status").innerHTML =
-      "QR PRODOTTO NON VALIDO";
+      "<span class='err'>QR PRODOTTO NON VALIDO</span>";
 
+      busy = false;
       return;
     }
 
@@ -85,30 +88,40 @@ function onScanSuccess(decodedText){
     const trattamento = parts[1];
 
     send(
-      `${API}?articolo=${articolo}&trattamento=${trattamento}&device=TEL1`
-    );
+      `${API}?articolo=${encodeURIComponent(articolo)}&trattamento=${encodeURIComponent(trattamento)}&device=TEL1`
+    ).then(()=>{
 
-    currentProduct = true;
+      currentProduct = true;
 
-    document.getElementById("status").innerHTML =
-      `<span class='ok'>
-      PRODOTTO OK<br>
-      SCANSIONA LOTTO
-      </span>`;
+      document.getElementById("status").innerHTML =
+        `<span class='ok'>
+        PRODOTTO OK<br>
+        SCANSIONA LOTTO
+        </span>`;
+
+      busy = false;
+    });
 
     return;
   }
 
-  // LOTTO
-
+  // =========================
+  // QR LOTTO
+  // =========================
   send(
-    `${API}?lotto=${decodedText}&device=TEL1`
+    `${API}?lotto=${encodeURIComponent(decodedText)}&device=TEL1`
   ).then(res=>{
 
-    document.getElementById("status").innerHTML =
-      `<span class='ok'>${res}</span>`;
+    if(res.includes("OK")){
+      document.getElementById("status").innerHTML =
+        `<span class='ok'>${res}</span>`;
+    } else {
+      document.getElementById("status").innerHTML =
+        `<span class='err'>${res}</span>`;
+    }
 
     currentProduct = false;
+    busy = false;
   });
 
 }
