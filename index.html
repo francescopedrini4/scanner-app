@@ -16,7 +16,7 @@ async function startScan() {
       throw "NESSUNA CAMERA TROVATA";
     }
 
-    // 🔥 prova a prendere la camera posteriore
+    // 🔥 preferisci camera posteriore
     const backCamera = devices.find(d =>
       (d.label || "").toLowerCase().includes("back") ||
       (d.label || "").toLowerCase().includes("rear") ||
