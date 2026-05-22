@@ -47,9 +47,9 @@ button{
 const API = "https://script.google.com/macros/s/AKfycbwdflMaYs5ZfwZIYyY6FJm_xNEXGkWxF5flgZOjNRC4fFLTCXrVLpuDlxIvYi2rxgt4dQ/exec";
 
 let scanner;
-let state = "IDLE"; // IDLE | PRODOTTO | LOTTO
+let state = "PRODOTTO";
 let lock = false;
-let lastScan = "";
+let lastScanTime = 0; // 🔴 FIX IMPORTANTE
 
 function beep(){
   navigator.vibrate(200);
@@ -78,72 +78,83 @@ function startScan(){
 
 function onScan(decodedText){
 
-  // 🔴 BLOCCO ASSOLUTO DUPLICATI
+  // 🔴 BLOCCO ANTI-DOPPIO VERO
+  const now = Date.now();
   if(lock) return;
-  if(decodedText === lastScan) return;
+  if(now - lastScanTime < 2000) return;
 
   lock = true;
-  lastScan = decodedText;
+  lastScanTime = now;
 
   beep();
 
-  setTimeout(()=> {
-    lock = false;
-    lastScan = "";
-  }, 1500);
+  scanner.pause(); // 🔴 FIX FONDAMENTALE
 
-  // ======================
-  // PRODOTTO
-  // ======================
-  if(state === "PRODOTTO"){
+  (async () => {
 
-    const parts = decodedText.split("|");
+    try {
 
-    if(parts.length < 2){
-      document.getElementById("status").innerHTML =
-        "<span class='err'>QR PRODOTTO NON VALIDO</span>";
-      return;
+      // ======================
+      // PRODOTTO
+      // ======================
+      if(state === "PRODOTTO"){
+
+        const parts = decodedText.split("|");
+
+        if(parts.length < 2){
+          document.getElementById("status").innerHTML =
+            "<span class='err'>QR PRODOTTO NON VALIDO</span>";
+          return;
+        }
+
+        const articolo = parts[0].trim();
+        const trattamento = parts[1].trim();
+
+        await send(`${API}?articolo=${encodeURIComponent(articolo)}&trattamento=${encodeURIComponent(trattamento)}&device=TEL1`);
+
+        state = "LOTTO";
+
+        document.getElementById("status").innerHTML =
+          "<span class='ok'>PRODOTTO OK<br>SCANSIONA LOTTO</span>";
+
+        return;
+      }
+
+      // ======================
+      // LOTTO
+      // ======================
+
+      let lotto = decodedText;
+
+      try {
+        const url = new URL(decodedText);
+        lotto = url.searchParams.get("lotto") || decodedText;
+      } catch(e){}
+
+      lotto = lotto.trim();
+
+      const res = await send(`${API}?lotto=${encodeURIComponent(lotto)}&device=TEL1`);
+
+      if(res === "REGISTRAZIONE COMPLETATA"){
+        document.getElementById("status").innerHTML =
+          `<span class='ok'>${res}</span>`;
+      } else {
+        document.getElementById("status").innerHTML =
+          `<span class='err'>${res}</span>`;
+      }
+
+      state = "PRODOTTO";
+
+    } finally {
+
+      setTimeout(() => {
+        lock = false;
+        scanner.resume(); // 🔴 RIAVVIO CAMERA
+      }, 1200);
+
     }
 
-    const articolo = parts[0].trim();
-    const trattamento = parts[1].trim();
-
-    send(`${API}?articolo=${encodeURIComponent(articolo)}&trattamento=${encodeURIComponent(trattamento)}&device=TEL1`);
-
-    state = "LOTTO";
-
-    document.getElementById("status").innerHTML =
-      "<span class='ok'>PRODOTTO OK<br>SCANSIONA LOTTO</span>";
-
-    return;
-  }
-
-  // ======================
-  // LOTTO
-  // ======================
-
-  let lotto = decodedText;
-
-  try {
-    const url = new URL(decodedText);
-    lotto = url.searchParams.get("lotto") || decodedText;
-  } catch(e){}
-
-  lotto = lotto.trim();
-
-  send(`${API}?lotto=${encodeURIComponent(lotto)}&device=TEL1`)
-  .then(res => {
-
-    if(res === "REGISTRAZIONE COMPLETATA"){
-      document.getElementById("status").innerHTML =
-        `<span class='ok'>${res}</span>`;
-    } else {
-      document.getElementById("status").innerHTML =
-        `<span class='err'>${res}</span>`;
-    }
-
-    state = "PRODOTTO";
-  });
+  })();
 
 }
 
