@@ -24,13 +24,8 @@ body{
   margin:20px;
 }
 
-.ok{
-  color:#00ff88;
-}
-
-.err{
-  color:red;
-}
+.ok{ color:#00ff88; }
+.err{ color:red; }
 
 </style>
 
@@ -45,11 +40,11 @@ body{
 
 <script>
 
-// 🔴 TUO NUOVO DEPLOY
 const API = "https://script.google.com/macros/s/AKfycbwdflMaYs5ZfwZIYyY6FJm_xNEXGkWxF5flgZOjNRC4fFLTCXrVLpuDlxIvYi2rxgt4dQ/exec";
 
 let currentProduct = false;
 let lockScan = false;
+let html5QrCode;
 
 function beep(){
   navigator.vibrate(200);
@@ -63,6 +58,9 @@ async function send(url){
 function unlock(){
   setTimeout(() => {
     lockScan = false;
+    if(html5QrCode){
+      html5QrCode.resume();
+    }
   }, 1200);
 }
 
@@ -70,6 +68,9 @@ function onScanSuccess(decodedText){
 
   if(lockScan) return;
   lockScan = true;
+
+  // 🔴 FERMA SUBITO CAMERA (FONDAMENTALE)
+  html5QrCode.pause();
 
   beep();
 
@@ -116,9 +117,7 @@ function onScanSuccess(decodedText){
   try {
     const url = new URL(decodedText);
     lotto = url.searchParams.get("lotto") || decodedText;
-  } catch (e) {
-    lotto = decodedText;
-  }
+  } catch (e) {}
 
   lotto = lotto.trim();
 
@@ -141,16 +140,20 @@ function onScanSuccess(decodedText){
 
 }
 
-const html5QrCode = new Html5Qrcode("reader");
+window.onload = async () => {
 
-html5QrCode.start(
-  { facingMode: "environment" },
-  {
-    fps: 10,
-    qrbox: 250
-  },
-  onScanSuccess
-);
+  html5QrCode = new Html5Qrcode("reader");
+
+  await html5QrCode.start(
+    { facingMode: "environment" },
+    {
+      fps: 10,
+      qrbox: 250
+    },
+    onScanSuccess
+  );
+
+};
 
 </script>
 
