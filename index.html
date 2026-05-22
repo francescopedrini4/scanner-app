@@ -1,8 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+body{
+  font-family: Arial;
+  text-align: center;
+  background: #111;
+  color: white;
+}
+
+#reader{
+  width: 100%;
+  min-height: 350px;
+  background: black;
+}
+
+#status{
+  font-size: 26px;
+  margin: 20px;
+}
+
+button{
+  font-size: 20px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.ok{ color:#00ff88; }
+.err{ color:red; }
+</style>
+
+</head>
+
+<body>
+
+<h1>SCANNER</h1>
+
+<button onclick="startScan()">INIZIA SCANSIONE</button>
+
+<div id="status">PRONTO</div>
+
+<div id="reader"></div>
+
+<script>
+
+let scanner = null;
+
+function beep(){
+  navigator.vibrate(150);
+}
+
+// ==========================
+// START SCANNER
+// ==========================
 async function startScan() {
 
   document.getElementById("status").innerText = "AVVIO CAMERA...";
 
   try {
+
+    if (scanner) {
+      await scanner.clear();
+      scanner = null;
+    }
 
     scanner = new Html5Qrcode("reader");
 
@@ -12,14 +77,13 @@ async function startScan() {
       throw "NESSUNA CAMERA TROVATA";
     }
 
-    // 🔥 CERCA CAMERA POSTERIORE
+    // 🔥 FORZA CAMERA POSTERIORE
     let backCamera = devices.find(d =>
-      d.label.toLowerCase().includes("back") ||
-      d.label.toLowerCase().includes("rear") ||
-      d.label.toLowerCase().includes("environment")
+      (d.label || "").toLowerCase().includes("back") ||
+      (d.label || "").toLowerCase().includes("rear") ||
+      (d.label || "").toLowerCase().includes("environment")
     );
 
-    // fallback
     if (!backCamera) {
       backCamera = devices[0];
     }
@@ -28,17 +92,35 @@ async function startScan() {
       { deviceId: backCamera.id },
       {
         fps: 10,
-        qrbox: 250
+        qrbox: { width: 250, height: 250 }
       },
-      (text) => {
-        document.getElementById("status").innerText = text;
-      }
+      onScan
     );
 
     document.getElementById("status").innerText = "SCANSIONE ATTIVA";
 
   } catch (err) {
-    document.getElementById("status").innerText =
-      "CAMERA NON ATTIVA: " + err;
+
+    console.error(err);
+
+    document.getElementById("status").innerHTML =
+      "<span class='err'>CAMERA NON ATTIVA: " + err + "</span>";
+
   }
 }
+
+// ==========================
+// SCAN RESULT
+// ==========================
+function onScan(decodedText){
+
+  beep();
+
+  document.getElementById("status").innerHTML =
+    "<span class='ok'>" + decodedText + "</span>";
+}
+
+</script>
+
+</body>
+</html>
