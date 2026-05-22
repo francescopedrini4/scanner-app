@@ -48,7 +48,7 @@ body{
 const API = "https://script.google.com/macros/s/AKfycbwLnLRQUt1N4wplEGnC3dfKGzFjGuzpomIQEmeXflIj-Q-AbnfIT8RbQa-0Gn9VX6GU3g/exec";
 
 let currentProduct = false;
-let busy = false;
+let lockScan = false;
 
 function beep(){
   navigator.vibrate(200);
@@ -59,10 +59,16 @@ async function send(url){
   return await r.text();
 }
 
+function unlock(){
+  setTimeout(() => {
+    lockScan = false;
+  }, 1200);
+}
+
 function onScanSuccess(decodedText){
 
-  if(busy) return;
-  busy = true;
+  if(lockScan) return;
+  lockScan = true;
 
   beep();
 
@@ -78,7 +84,7 @@ function onScanSuccess(decodedText){
       document.getElementById("status").innerHTML =
         "<span class='err'>QR PRODOTTO NON VALIDO</span>";
 
-      busy = false;
+      unlock();
       return;
     }
 
@@ -94,7 +100,7 @@ function onScanSuccess(decodedText){
       document.getElementById("status").innerHTML =
         `<span class='ok'>PRODOTTO OK<br>SCANSIONA LOTTO</span>`;
 
-      busy = false;
+      unlock();
     });
 
     return;
@@ -128,7 +134,8 @@ function onScanSuccess(decodedText){
     }
 
     currentProduct = false;
-    busy = false;
+
+    unlock();
   });
 
 }
