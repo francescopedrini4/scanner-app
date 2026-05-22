@@ -7,7 +7,6 @@
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
-
 body{
   font-family:Arial;
   text-align:center;
@@ -15,9 +14,7 @@ body{
   color:white;
 }
 
-#reader{
-  width:100%;
-}
+#reader{ width:100%; }
 
 #status{
   font-size:28px;
@@ -27,6 +24,11 @@ body{
 .ok{ color:#00ff88; }
 .err{ color:red; }
 
+button{
+  font-size:20px;
+  padding:10px 20px;
+  margin-top:10px;
+}
 </style>
 
 </head>
@@ -34,17 +36,20 @@ body{
 
 <h1>SCANNER</h1>
 
-<div id="status">SCANSIONA PRODOTTO</div>
+<div id="status">PRONTO</div>
 
-<div id="reader"></div>
+<button onclick="startScan()">INIZIA SCANSIONE</button>
+
+<div id="reader" style="display:none;"></div>
 
 <script>
 
 const API = "https://script.google.com/macros/s/AKfycbwdflMaYs5ZfwZIYyY6FJm_xNEXGkWxF5flgZOjNRC4fFLTCXrVLpuDlxIvYi2rxgt4dQ/exec";
 
-let currentProduct = false;
-let lockScan = false;
-let html5QrCode;
+let scanner;
+let state = "IDLE"; // IDLE | PRODOTTO | LOTTO
+let lock = false;
+let lastScan = "";
 
 function beep(){
   navigator.vibrate(200);
@@ -55,75 +60,79 @@ async function send(url){
   return await r.text();
 }
 
-function unlock(){
-  setTimeout(() => {
-    lockScan = false;
-    if(html5QrCode){
-      html5QrCode.resume();
-    }
-  }, 1200);
+function startScan(){
+
+  document.getElementById("reader").style.display = "block";
+
+  scanner = new Html5Qrcode("reader");
+
+  scanner.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 250 },
+    onScan
+  );
+
+  state = "PRODOTTO";
+  document.getElementById("status").innerText = "SCANSIONA PRODOTTO";
 }
 
-function onScanSuccess(decodedText){
+function onScan(decodedText){
 
-  if(lockScan) return;
-  lockScan = true;
+  // 🔴 BLOCCO ASSOLUTO DUPLICATI
+  if(lock) return;
+  if(decodedText === lastScan) return;
 
-  // 🔴 FERMA SUBITO CAMERA (FONDAMENTALE)
-  html5QrCode.pause();
+  lock = true;
+  lastScan = decodedText;
 
   beep();
 
-  // =========================
-  // QR PRODOTTO
-  // =========================
-  if(!currentProduct){
+  setTimeout(()=> {
+    lock = false;
+    lastScan = "";
+  }, 1500);
+
+  // ======================
+  // PRODOTTO
+  // ======================
+  if(state === "PRODOTTO"){
 
     const parts = decodedText.split("|");
 
     if(parts.length < 2){
-
       document.getElementById("status").innerHTML =
         "<span class='err'>QR PRODOTTO NON VALIDO</span>";
-
-      unlock();
       return;
     }
 
     const articolo = parts[0].trim();
     const trattamento = parts[1].trim();
 
-    send(
-      `${API}?articolo=${encodeURIComponent(articolo)}&trattamento=${encodeURIComponent(trattamento)}&device=TEL1`
-    ).then(()=>{
+    send(`${API}?articolo=${encodeURIComponent(articolo)}&trattamento=${encodeURIComponent(trattamento)}&device=TEL1`);
 
-      currentProduct = true;
+    state = "LOTTO";
 
-      document.getElementById("status").innerHTML =
-        `<span class='ok'>PRODOTTO OK<br>SCANSIONA LOTTO</span>`;
-
-      unlock();
-    });
+    document.getElementById("status").innerHTML =
+      "<span class='ok'>PRODOTTO OK<br>SCANSIONA LOTTO</span>";
 
     return;
   }
 
-  // =========================
-  // QR LOTTO
-  // =========================
+  // ======================
+  // LOTTO
+  // ======================
 
   let lotto = decodedText;
 
   try {
     const url = new URL(decodedText);
     lotto = url.searchParams.get("lotto") || decodedText;
-  } catch (e) {}
+  } catch(e){}
 
   lotto = lotto.trim();
 
-  send(
-    `${API}?lotto=${encodeURIComponent(lotto)}&device=TEL1`
-  ).then(res=>{
+  send(`${API}?lotto=${encodeURIComponent(lotto)}&device=TEL1`)
+  .then(res => {
 
     if(res === "REGISTRAZIONE COMPLETATA"){
       document.getElementById("status").innerHTML =
@@ -133,27 +142,10 @@ function onScanSuccess(decodedText){
         `<span class='err'>${res}</span>`;
     }
 
-    currentProduct = false;
-
-    unlock();
+    state = "PRODOTTO";
   });
 
 }
-
-window.onload = async () => {
-
-  html5QrCode = new Html5Qrcode("reader");
-
-  await html5QrCode.start(
-    { facingMode: "environment" },
-    {
-      fps: 10,
-      qrbox: 250
-    },
-    onScanSuccess
-  );
-
-};
 
 </script>
 
