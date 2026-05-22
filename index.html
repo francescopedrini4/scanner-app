@@ -1,9 +1,13 @@
+let scanner;
+
 async function startScan() {
 
-  document.getElementById("status").innerText = "APERTURA CAMERA...";
+  const status = document.getElementById("status");
+  status.innerText = "RICHIESTA CAMERA...";
 
   try {
 
+    // 🔴 stop precedente scanner (evita blocchi)
     if (scanner) {
       try {
         await scanner.stop();
@@ -13,6 +17,7 @@ async function startScan() {
 
     scanner = new Html5Qrcode("reader");
 
+    // 🔥 VERSIONE STABILE: lascia scegliere al browser la camera
     await scanner.start(
       { facingMode: "environment" },
       {
@@ -22,16 +27,14 @@ async function startScan() {
       onScan
     );
 
-    document.getElementById("status").innerText = "SCANSIONE ATTIVA";
+    status.innerText = "SCANSIONE ATTIVA";
 
   } catch (err) {
 
-    console.error("CAMERA ERROR:", err);
+    console.error("CAMERA ERROR FULL:", err);
 
-    document.getElementById("status").innerText =
-      "CAMERA NON ATTIVA";
-
-    alert(err?.message || err);
+    status.innerText =
+      "ERRORE CAMERA: " + (err?.name || err?.message || err);
 
   }
 }
