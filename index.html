@@ -1,73 +1,18 @@
-<!DOCTYPE html>
-<html>
-<head>
-
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<script src="https://unpkg.com/html5-qrcode"></script>
-
-<style>
-body{
-  font-family: Arial;
-  text-align: center;
-  background: #111;
-  color: white;
-}
-
-#reader{
-  width: 100%;
-  min-height: 350px;
-  background: black;
-}
-
-#status{
-  font-size: 26px;
-  margin: 20px;
-}
-
-button{
-  font-size: 20px;
-  padding: 12px;
-  margin-top: 10px;
-}
-
-.ok{ color:#00ff88; }
-.err{ color:red; }
-</style>
-
-</head>
-
-<body>
-
-<h1>SCANNER</h1>
-
-<button onclick="startScan()">INIZIA SCANSIONE</button>
-
-<div id="status">PRONTO</div>
-
-<div id="reader"></div>
-
-<script>
-
-let scanner = null;
-
-function beep(){
-  navigator.vibrate(150);
-}
-
-// ==========================
-// START SCANNER
-// ==========================
 async function startScan() {
 
-  document.getElementById("status").innerText = "AVVIO CAMERA...";
+  document.getElementById("status").innerText = "RICHIESTA CAMERA...";
 
   try {
 
-    if (scanner) {
-      await scanner.clear();
-      scanner = null;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw "BROWSER NON SUPPORTATO";
     }
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" }
+    });
+
+    stream.getTracks().forEach(t => t.stop());
 
     scanner = new Html5Qrcode("reader");
 
@@ -77,19 +22,8 @@ async function startScan() {
       throw "NESSUNA CAMERA TROVATA";
     }
 
-    // 🔥 FORZA CAMERA POSTERIORE
-    let backCamera = devices.find(d =>
-      (d.label || "").toLowerCase().includes("back") ||
-      (d.label || "").toLowerCase().includes("rear") ||
-      (d.label || "").toLowerCase().includes("environment")
-    );
-
-    if (!backCamera) {
-      backCamera = devices[0];
-    }
-
     await scanner.start(
-      { deviceId: backCamera.id },
+      { deviceId: devices[0].id },
       {
         fps: 10,
         qrbox: { width: 250, height: 250 }
@@ -104,23 +38,7 @@ async function startScan() {
     console.error(err);
 
     document.getElementById("status").innerHTML =
-      "<span class='err'>CAMERA NON ATTIVA: " + err + "</span>";
+      "<span style='color:red'>CAMERA NON ATTIVA: " + err + "</span>";
 
   }
 }
-
-// ==========================
-// SCAN RESULT
-// ==========================
-function onScan(decodedText){
-
-  beep();
-
-  document.getElementById("status").innerHTML =
-    "<span class='ok'>" + decodedText + "</span>";
-}
-
-</script>
-
-</body>
-</html>
