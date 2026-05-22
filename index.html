@@ -44,12 +44,13 @@ button{
 
 <script>
 
-const API = "https://script.google.com/macros/s/AKfycbwdflMaYs5ZfwZIYyY6FJm_xNEXGkWxF5flgZOjNRC4fFLTCXrVLpuDlxIvYi2rxgt4dQ/exec";
+// 🔥 METTI QUI IL TUO DEPLOY ATTIVO
+const API = "https://script.google.com/macros/s/AKfycbztPEDH-ZUjD46uW11p-cQjV37J4YIOi3nihPIVbQEV_YS2f1bY-NzzLNOIyN3TjGMFBg/exec";
 
 let scanner;
 let state = "PRODOTTO";
 let lock = false;
-let lastScanTime = 0; // 🔴 FIX IMPORTANTE
+let lastScanTime = 0;
 
 function beep(){
   navigator.vibrate(200);
@@ -78,17 +79,15 @@ function startScan(){
 
 function onScan(decodedText){
 
-  // 🔴 BLOCCO ANTI-DOPPIO VERO
   const now = Date.now();
   if(lock) return;
-  if(now - lastScanTime < 2000) return;
+  if(now - lastScanTime < 3000) return;
 
   lock = true;
   lastScanTime = now;
 
   beep();
-
-  scanner.pause(); // 🔴 FIX FONDAMENTALE
+  scanner.pause();
 
   (async () => {
 
@@ -149,8 +148,8 @@ function onScan(decodedText){
 
       setTimeout(() => {
         lock = false;
-        scanner.resume(); // 🔴 RIAVVIO CAMERA
-      }, 1200);
+        scanner.resume();
+      }, 1500);
 
     }
 
