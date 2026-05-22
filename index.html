@@ -4,7 +4,6 @@ async function startScan() {
 
   try {
 
-    // 🔥 STOP SICURO SCANNER PRECEDENTE
     if (scanner) {
       try {
         await scanner.stop();
@@ -39,10 +38,10 @@ async function startScan() {
 
   } catch (err) {
 
-    console.error(err);
+    console.error("DEBUG ERR:", err);
 
     document.getElementById("status").innerText =
-      "CAMERA NON ATTIVA: " + err;
+      "CAMERA NON ATTIVA: " + (err?.message || err);
 
   }
 }
