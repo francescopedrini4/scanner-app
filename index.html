@@ -44,7 +44,6 @@ button{
 
 <script>
 
-// 🔥 METTI QUI IL TUO DEPLOY
 const API = "https://script.google.com/macros/s/AKfycbztPEDH-ZUjD46uW11p-cQjV37J4YIOi3nihPIVbQEV_YS2f1bY-NzzLNOIyN3TjGMFBg/exec";
 
 let scanner = null;
@@ -61,17 +60,21 @@ async function send(url){
   return await r.text();
 }
 
-function startScan() {
+async function startScan() {
 
   document.getElementById("reader").style.display = "block";
 
+  // 🔥 FIX IPHONE: stop pulito se esiste
   if (scanner) {
-    scanner.clear();
+    try {
+      await scanner.clear();
+    } catch(e){}
+    scanner = null;
   }
 
   scanner = new Html5Qrcode("reader");
 
-  scanner.start(
+  await scanner.start(
     { facingMode: { ideal: "environment" } },
     { fps: 10, qrbox: 250 },
     onScan
@@ -82,10 +85,16 @@ function startScan() {
 }
 
 function restartScanner(){
+
   if(scanner){
     scanner.clear().then(() => {
-      setTimeout(() => startScan(), 800);
+      scanner = null;
+      setTimeout(() => {
+        startScan();
+      }, 900);
     });
+  } else {
+    startScan();
   }
 }
 
@@ -160,8 +169,10 @@ function onScan(decodedText){
 
       lock = false;
 
-      // 🔥 FIX IPHONE: restart pulito camera
-      restartScanner();
+      // 🔥 restart stabile iPhone + Android
+      setTimeout(() => {
+        restartScanner();
+      }, 1200);
 
     }
 
