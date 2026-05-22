@@ -1,9 +1,12 @@
+let scanner;
+
 async function startScan() {
 
-  document.getElementById("status").innerText = "RICHIESTA CAMERA...";
+  document.getElementById("status").innerText = "APERTURA CAMERA...";
 
   try {
 
+    // 🔴 stop precedente scanner
     if (scanner) {
       try {
         await scanner.stop();
@@ -13,23 +16,12 @@ async function startScan() {
 
     scanner = new Html5Qrcode("reader");
 
-    const devices = await Html5Qrcode.getCameras();
-
-    if (!devices || devices.length === 0) {
-      throw "NESSUNA CAMERA TROVATA";
-    }
-
-    const backCamera = devices.find(d =>
-      (d.label || "").toLowerCase().includes("back") ||
-      (d.label || "").toLowerCase().includes("rear") ||
-      (d.label || "").toLowerCase().includes("environment")
-    ) || devices[0];
-
+    // 🔥 VERSIONE PIÙ STABILE (NO deviceId)
     await scanner.start(
-      backCamera.id,
+      { facingMode: "environment" },
       {
         fps: 10,
-        qrbox: { width: 250, height: 250 }
+        qrbox: 250
       },
       onScan
     );
@@ -38,10 +30,12 @@ async function startScan() {
 
   } catch (err) {
 
-    console.error("CAMERA ERROR:", err);
+    console.error("SCAN ERROR:", err);
 
     document.getElementById("status").innerText =
-      "CAMERA NON ATTIVA";
+      "ERRORE CAMERA";
+
+    alert(err?.message || err);
 
   }
 }
