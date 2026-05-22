@@ -38,7 +38,7 @@ async function startScan() {
 
   } catch (err) {
 
-    console.error("DEBUG ERR:", err);
+    console.error("DEBUG ERROR:", err);
 
     document.getElementById("status").innerText =
       "CAMERA NON ATTIVA: " + (err?.message || err);
