@@ -8,12 +8,6 @@ async function startScan() {
       throw "BROWSER NON SUPPORTATO";
     }
 
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" }
-    });
-
-    stream.getTracks().forEach(t => t.stop());
-
     scanner = new Html5Qrcode("reader");
 
     const devices = await Html5Qrcode.getCameras();
@@ -22,8 +16,15 @@ async function startScan() {
       throw "NESSUNA CAMERA TROVATA";
     }
 
+    // 🔥 prova a trovare camera posteriore
+    let backCamera = devices.find(d =>
+      d.label.toLowerCase().includes("back") ||
+      d.label.toLowerCase().includes("rear") ||
+      d.label.toLowerCase().includes("environment")
+    ) || devices[0];
+
     await scanner.start(
-      { deviceId: devices[0].id },
+      backCamera.id,
       {
         fps: 10,
         qrbox: { width: 250, height: 250 }
@@ -38,7 +39,7 @@ async function startScan() {
     console.error(err);
 
     document.getElementById("status").innerHTML =
-      "<span style='color:red'>CAMERA NON ATTIVA: " + err + "</span>";
+      "CAMERA NON ATTIVA: " + err;
 
   }
 }
