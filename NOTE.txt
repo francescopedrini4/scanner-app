@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+
+body{
+  font-family:Arial;
+  text-align:center;
+  background:#111;
+  color:white;
+}
+
+#reader{
+  width:100%;
+}
+
+#status{
+  font-size:28px;
+  margin:20px;
+}
+
+.ok{
+  color:#00ff88;
+}
+
+.err{
+  color:red;
+}
+
+</style>
+
+</head>
+<body>
+
+<h1>SCANNER</h1>
+
+<div id="status">
+SCANSIONA PRODOTTO
+</div>
+
+<div id="reader"></div>
+
+<script>
+
+const API = "INCOLLA_QUI_IL_TUO_LINK";
+
+let currentProduct = null;
+
+function beep(){
+  navigator.vibrate(200);
+}
+
+async function send(url){
+
+  const r = await fetch(url);
+  return await r.text();
+}
+
+function onScanSuccess(decodedText){
+
+  beep();
+
+  // QR PRODOTTO
+  // formato:
+  // articolo|trattamento
+
+  if(!currentProduct){
+
+    const parts = decodedText.split("|");
+
+    if(parts.length < 2){
+
+      document.getElementById("status").innerHTML =
+      "QR PRODOTTO NON VALIDO";
+
+      return;
+    }
+
+    const articolo = parts[0];
+    const trattamento = parts[1];
+
+    send(
+      `${API}?articolo=${articolo}&trattamento=${trattamento}&device=TEL1`
+    );
+
+    currentProduct = true;
+
+    document.getElementById("status").innerHTML =
+      `<span class='ok'>
+      PRODOTTO OK<br>
+      SCANSIONA LOTTO
+      </span>`;
+
+    return;
+  }
+
+  // LOTTO
+
+  send(
+    `${API}?lotto=${decodedText}&device=TEL1`
+  ).then(res=>{
+
+    document.getElementById("status").innerHTML =
+      `<span class='ok'>${res}</span>`;
+
+    currentProduct = false;
+  });
+
+}
+
+const html5QrCode = new Html5Qrcode("reader");
+
+html5QrCode.start(
+  { facingMode: "environment" },
+  {
+    fps: 10,
+    qrbox: 250
+  },
+  onScanSuccess
+);
+
+</script>
+
+</body>
+</html>
