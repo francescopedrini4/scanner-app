@@ -4,6 +4,7 @@ async function startScan() {
 
   try {
 
+    // 🔥 IMPORTANTISSIMO: reset scanner precedente
     if (scanner) {
       try {
         await scanner.stop();
@@ -40,7 +41,7 @@ async function startScan() {
 
     console.error(err);
 
-    document.getElementById("status").innerText =
+    document.getElementById("status").innerHTML =
       "CAMERA NON ATTIVA: " + err;
 
   }
