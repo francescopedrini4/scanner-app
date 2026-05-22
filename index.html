@@ -82,8 +82,8 @@ function onScanSuccess(decodedText){
       return;
     }
 
-    const articolo = parts[0];
-    const trattamento = parts[1];
+    const articolo = parts[0].trim();
+    const trattamento = parts[1].trim();
 
     send(
       `${API}?articolo=${encodeURIComponent(articolo)}&trattamento=${encodeURIComponent(trattamento)}&device=TEL1`
@@ -101,7 +101,7 @@ function onScanSuccess(decodedText){
   }
 
   // =========================
-  // QR LOTTO (FIX DEFINITIVO)
+  // QR LOTTO (VERSIONE SICURA)
   // =========================
 
   let lotto = decodedText;
@@ -113,11 +113,13 @@ function onScanSuccess(decodedText){
     lotto = decodedText;
   }
 
+  lotto = lotto.trim();
+
   send(
     `${API}?lotto=${encodeURIComponent(lotto)}&device=TEL1`
   ).then(res=>{
 
-    if(res.includes("REGISTRAZIONE COMPLETATA")){
+    if(res === "REGISTRAZIONE COMPLETATA"){
       document.getElementById("status").innerHTML =
         `<span class='ok'>${res}</span>`;
     } else {
