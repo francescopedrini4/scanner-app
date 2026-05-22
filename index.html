@@ -1,12 +1,9 @@
-let scanner;
-
 async function startScan() {
 
   document.getElementById("status").innerText = "APERTURA CAMERA...";
 
   try {
 
-    // 🔴 stop precedente scanner
     if (scanner) {
       try {
         await scanner.stop();
@@ -16,7 +13,6 @@ async function startScan() {
 
     scanner = new Html5Qrcode("reader");
 
-    // 🔥 VERSIONE PIÙ STABILE (NO deviceId)
     await scanner.start(
       { facingMode: "environment" },
       {
@@ -30,10 +26,10 @@ async function startScan() {
 
   } catch (err) {
 
-    console.error("SCAN ERROR:", err);
+    console.error("CAMERA ERROR:", err);
 
     document.getElementById("status").innerText =
-      "ERRORE CAMERA";
+      "CAMERA NON ATTIVA";
 
     alert(err?.message || err);
 
